@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPPFP MIS — Integrated Project Portfolio, Financial & Performance MIS</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --sea:#0E7C86;
+    --sky:#1DCED8;
+    --sky-soft:#E3FBFC;
+    --sun:#FF9D50;
+    --leaf:#55E07E;
+    --leaf-soft:#E4FBEC;
+    --sand:#FFF9D8;
+    --risk:#E1584F;
+    --ink:#123138;
+    --ink-soft:#5C7A80;
+    --card:#FFFFFF;
+    --line:#E7E2C4;
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --sand:#0B2027; --card:#0F2A31; --ink:#EAF6F6; --ink-soft:#9FC2C4; --line:#1B4048; --sky-soft:#123840; --leaf-soft:#123326;
+    }
+  }
+  :root[data-theme="dark"]{ --sand:#0B2027; --card:#0F2A31; --ink:#EAF6F6; --ink-soft:#9FC2C4; --line:#1B4048; --sky-soft:#123840; --leaf-soft:#123326; }
+
+  *{box-sizing:border-box;}
+  body{ background:var(--sand); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,h4,h5,.brand,.stat-num{ font-family:'Sora',sans-serif; }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:30px;
+    background:radial-gradient(circle at 20% 20%, rgba(29,206,216,.18), transparent 45%),
+               radial-gradient(circle at 85% 80%, rgba(255,157,80,.16), transparent 45%),
+               var(--sand);
+  }
+  .login-card{ width:100%; max-width:760px; background:var(--card); border-radius:22px; border:1px solid var(--line); padding:40px; box-shadow:0 30px 60px rgba(10,50,55,.12); }
+  .login-brand{ display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .login-mark{ width:44px; height:44px; border-radius:13px; background:var(--sun); display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:#4A2600; }
+  .login-title{ font-size:1.55rem; font-weight:800; margin:0; }
+  .login-sub{ color:var(--ink-soft); font-size:.9rem; margin-bottom:28px; }
+  .role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:600px){ .role-grid{ grid-template-columns:1fr; } }
+  .role-card{
+    text-align:left; border:1.5px solid var(--line); background:var(--sand); border-radius:15px; padding:16px 18px;
+    cursor:pointer; transition:border-color .15s ease, transform .15s ease; width:100%;
+  }
+  .role-card:hover{ border-color:var(--sky); transform:translateY(-2px); }
+  .role-avatar{ width:38px; height:38px; border-radius:50%; background:var(--sea); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; margin-bottom:10px; }
+  .role-name{ font-weight:700; font-size:.95rem; }
+  .role-tag{ display:inline-block; font-size:.68rem; font-weight:700; color:var(--sea); background:var(--sky-soft); padding:2px 9px; border-radius:999px; margin:5px 0 8px; }
+  .role-desc{ font-size:.78rem; color:var(--ink-soft); line-height:1.4; }
+  .login-note{ font-size:.76rem; color:var(--ink-soft); margin-top:22px; text-align:center; }
+
+  /* ---------- Shell ---------- */
+  .shell{ display:none; min-height:100vh; }
+  .shell.show{ display:flex; }
+  .sidebar{ width:250px; flex-shrink:0; background:linear-gradient(190deg, var(--sea), #0A5960 85%); color:#fff; padding:28px 18px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  .brand{ font-weight:800; font-size:1.1rem; letter-spacing:.2px; display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+  .brand-mark{ width:34px;height:34px;border-radius:10px;background:var(--sun); display:flex;align-items:center;justify-content:center; font-size:1.05rem; color:#4A2600;}
+  .brand-sub{ color:#BFEFF1; font-size:.72rem; margin-bottom:26px; padding-left:44px; line-height:1.35;}
+  .nav-item{ display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:11px; color:#D8F5F6; font-weight:600; font-size:.92rem; cursor:pointer; margin-bottom:4px; transition:background .15s ease, color .15s ease; border:1px solid transparent; }
+  .nav-item .ic{ font-size:1.05rem; width:20px; text-align:center; }
+  .nav-item:hover{ background:rgba(255,255,255,.08); }
+  .nav-item.active{ background:var(--sky); color:#06373B; box-shadow:0 4px 14px rgba(0,0,0,.18); }
+  .side-owner{ margin-top:26px; padding:14px; border-radius:14px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); }
+  .side-owner .avatar{ width:38px;height:38px;border-radius:50%;background:var(--sun);color:#4A2600; display:flex;align-items:center;justify-content:center;font-weight:700; }
+  .logout-link{ display:block; margin-top:12px; font-size:.78rem; color:#BFEFF1; cursor:pointer; text-decoration:underline; }
+
+  .main{ flex:1; min-width:0; padding:26px 32px 60px; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+  .topbar h1{ font-size:1.5rem; font-weight:800; margin:0; }
+  .topbar .sub{ color:var(--ink-soft); font-size:.88rem; }
+  .top-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .pill-toggle{ display:flex; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px; gap:2px; }
+  .pill-toggle button{ border:none; background:transparent; padding:6px 14px; border-radius:999px; font-size:.8rem; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+  .pill-toggle button.on{ background:var(--sky); color:#06373B; }
+  .btn-download{ background:var(--sea); color:#fff; border:none; padding:9px 16px; border-radius:999px; font-weight:700; font-size:.82rem; }
+  .btn-download:hover{ background:#0a636b; color:#fff; }
+
+  .section{ display:none; animation:fade .25s ease; }
+  .section.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .stat-card{ background:var(--card); border-radius:var(--radius); padding:18px 20px; border:1px solid var(--line); height:100%; }
+  .stat-label{ font-size:.76rem; color:var(--ink-soft); font-weight:600; margin-bottom:6px; }
+  .stat-num{ font-size:1.55rem; font-weight:800; line-height:1.1; }
+  .stat-note{ font-size:.75rem; color:var(--ink-soft); margin-top:4px;}
+  .chip{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:.72rem; font-weight:700; }
+  .chip-healthy{ background:var(--leaf-soft); color:#1B7A44; }
+  .chip-attention{ background:#FFF0DF; color:#B5601A; }
+  .chip-risk{ background:#FCE4E2; color:#B23127; }
+  @media (prefers-color-scheme:dark){ .chip-attention{ background:#3A2A17; color:#FFC48F; } .chip-risk{ background:#3A1917; color:#FFAFA8; } .chip-healthy{ background:#123326; color:#8FF0B1; } }
+  :root[data-theme="dark"] .chip-attention{ background:#3A2A17; color:#FFC48F; }
+  :root[data-theme="dark"] .chip-risk{ background:#3A1917; color:#FFAFA8; }
+  :root[data-theme="dark"] .chip-healthy{ background:#123326; color:#8FF0B1; }
+  .dot{ width:9px;height:9px;border-radius:50%; display:inline-block; }
+  .dot-healthy{ background:var(--leaf); }
+  .dot-attention{ background:var(--sun); }
+  .dot-risk{ background:var(--risk); }
+
+  .panel{ background:var(--card); border-radius:var(--radius); border:1px solid var(--line); padding:20px 22px; }
+  .panel h5{ font-weight:800; font-size:1rem; margin-bottom:14px; }
+
+  .progress-track{ background:var(--sky-soft); border-radius:999px; height:8px; overflow:hidden; }
+  .progress-fill{ height:100%; border-radius:999px; background:var(--sky); }
+
+  .proj-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 4px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .proj-row:last-child{ border-bottom:none; }
+  .proj-row:hover{ background:var(--sky-soft); border-radius:10px; }
+  .proj-name{ font-weight:700; font-size:.92rem; }
+  .proj-meta{ font-size:.76rem; color:var(--ink-soft); }
+
+  table.tbl{ width:100%; border-collapse:collapse; font-size:.86rem; }
+  table.tbl th{ text-align:left; color:var(--ink-soft); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:2px solid var(--line); }
+  table.tbl td{ padding:12px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table.tbl tr:last-child td{ border-bottom:none; }
+  table.tbl tr.clickable:hover{ background:var(--sky-soft); cursor:pointer; }
+
+  .filter-btn{ border:1px solid var(--line); background:var(--card); color:var(--ink); padding:6px 14px; border-radius:999px; font-size:.8rem; font-weight:600; cursor:pointer; }
+  .filter-btn.on{ background:var(--sea); color:#fff; border-color:var(--sea); }
+
+  .btn-sky{ background:var(--sky); border-color:var(--sky); color:#06373B; font-weight:700; }
+  .btn-sky:hover{ background:#17b9c2; border-color:#17b9c2; color:#06373B; }
+  .btn-sun{ background:var(--sun); border-color:var(--sun); color:#4A2600; font-weight:700; }
+  .btn-sun:hover{ background:#ef8c3c; border-color:#ef8c3c; color:#4A2600; }
+
+  .flow-card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; min-width:150px; }
+  .flow-arrow{ color:var(--ink-soft); font-size:1.4rem; align-self:center; }
+
+  .report-card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; height:100%; display:flex; flex-direction:column; gap:10px; }
+  .report-ic{ width:40px;height:40px;border-radius:11px; background:var(--sky-soft); color:var(--sea); display:flex; align-items:center; justify-content:center; font-size:1.1rem;}
+
+  .badge-status{ font-size:.72rem; font-weight:700; padding:4px 10px; border-radius:999px; }
+  .badge-paid{ background:var(--leaf-soft); color:#1B7A44; }
+  .badge-pending{ background:#FFF0DF; color:#B5601A; }
+  @media (prefers-color-scheme:dark){ .badge-paid{ background:#123326; color:#8FF0B1; } .badge-pending{ background:#3A2A17; color:#FFC48F; } }
+
+  .perm-note{ background:var(--sky-soft); border:1px dashed var(--sky); color:var(--sea); font-size:.8rem; padding:10px 14px; border-radius:12px; }
+
+  .toast-lite{ position:fixed; bottom:26px; right:26px; background:var(--sea); color:#fff; padding:14px 20px; border-radius:12px; font-size:.88rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.25); transform:translateY(20px); opacity:0; transition:all .25s ease; pointer-events:none; z-index:80; max-width:320px; }
+  .toast-lite.show{ transform:translateY(0); opacity:1; }
+
+  ::-webkit-scrollbar{ width:9px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:10px; }
+
+  @media (max-width: 900px){
+    .shell.show{ flex-direction:column; }
+    .sidebar{ width:100%; height:auto; position:relative; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+    .side-owner{ display:none; }
+    .brand-sub{ display:none; }
+    .main{ padding:20px 16px 50px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand"><div class="login-mark">◆</div><h1 class="login-title">IPPFP MIS</h1></div>
+    <div class="login-sub">Integrated Project Portfolio, Financial &amp; Performance Management Information System — sign in to continue.</div>
+    <div class="role-grid" id="roleGrid"></div>
+    <div class="login-note">Demo environment — no password required. Pick any account to see what that role can see and do.</div>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div class="shell" id="shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">◆</span> IPPFP MIS</div>
+    <div class="brand-sub">Integrated Project Portfolio, Financial &amp; Performance MIS</div>
+    <div id="navList"></div>
+    <div class="side-owner">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <div class="avatar" id="sideAvatar">LM</div>
+        <div>
+          <div style="font-weight:700; font-size:.88rem;" id="sideName">Lynn Musyoka</div>
+          <div style="font-size:.72rem; color:#BFEFF1;" id="sideRole">Owner</div>
+        </div>
+      </div>
+      <div style="font-size:.72rem; color:#BFEFF1;">Demo data — for illustration only.</div>
+      <div class="logout-link" onclick="logout()">Log out</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Portfolio dashboard</h1>
+        <div class="sub" id="pageSub">Everything happening across your projects, funds and people, in one place.</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn-download" onclick="downloadSystem()">⭳ Download system</button>
+        <div class="pill-toggle" title="Preview color mode">
+          <button class="on" id="lightBtn" onclick="setTheme('light')">☀ Light</button>
+          <button id="darkBtn" onclick="setTheme('dark')">☾ Dark</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section class="section" id="sec-dashboard">
+      <div class="row g-3 mb-3" id="dashStatsProjects"></div>
+      <div class="row g-3 mb-3" id="dashStatsFinance"></div>
+      <div class="row g-3">
+        <div class="col-lg-7">
+          <div class="panel mb-3">
+            <h5>Budget vs. spend by project</h5>
+            <canvas id="chartBudget" height="180"></canvas>
+          </div>
+          <div class="panel">
+            <h5 id="catChartTitle">Where the money is going</h5>
+            <canvas id="chartCategory" height="180"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="panel mb-3">
+            <h5 id="healthTitle">Project health</h5>
+            <div id="healthList"></div>
+          </div>
+          <div class="panel">
+            <h5>Fund source utilization</h5>
+            <canvas id="chartFund" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section class="section" id="sec-projects">
+      <div class="panel mb-3">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <span class="stat-note" style="margin:0; font-weight:700; color:var(--ink);">Filter:</span>
+          <button class="filter-btn on" data-filter="location" data-value="all">All locations</button>
+          <button class="filter-btn" data-filter="location" data-value="Nairobi">Nairobi</button>
+          <button class="filter-btn" data-filter="location" data-value="Mombasa">Mombasa</button>
+          <span style="width:1px; height:22px; background:var(--line); margin:0 4px;"></span>
+          <button class="filter-btn on" data-filter="fund" data-value="all">All fund sources</button>
+          <button class="filter-btn" data-filter="fund" data-value="Investor A">Investor A</button>
+          <button class="filter-btn" data-filter="fund" data-value="Investor B">Investor B</button>
+          <button class="filter-btn" data-filter="fund" data-value="Investor C">Investor C</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Project</th><th>Location</th><th>Fund source</th><th>Budget</th><th>Spent</th><th>Progress</th><th>Health</th></tr></thead>
+          <tbody id="projectsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PAYROLL -->
+    <section class="section" id="sec-payroll">
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Payroll this month</div><div class="stat-num" id="pr-total">—</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Paid</div><div class="stat-num" style="color:#1B7A44" id="pr-paid">—</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Pending</div><div class="stat-num" style="color:var(--sun)" id="pr-pending">—</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Employees</div><div class="stat-num">8</div><div class="stat-note">Across 5 projects</div></div></div>
+      </div>
+      <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <h5 style="margin:0;">Staff &amp; payments — September 2026</h5>
+          <button class="btn btn-sun btn-sm" id="runPayrollBtn" onclick="runPayroll()">Run payroll for pending staff</button>
+        </div>
+        <div id="payrollPermNote" class="perm-note mb-3" style="display:none;">You have view-only access to payroll. Contact a Finance User or Administrator to process payments.</div>
+        <table class="tbl">
+          <thead><tr><th>Employee</th><th>Role</th><th>Assigned project</th><th>Monthly pay</th><th>Status</th></tr></thead>
+          <tbody id="payrollBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FUND FLOW -->
+    <section class="section" id="sec-fundflow">
+      <div class="panel">
+        <h5>How money moves through the portfolio</h5>
+        <div class="stat-note mb-3">Pick a project to trace its funds from source to remaining balance.</div>
+        <div class="d-flex flex-wrap gap-2 mb-4" id="flowPicker"></div>
+        <div id="flowDisplay"></div>
+      </div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="section" id="sec-reports">
+      <div class="row g-3" id="reportsGrid"></div>
+    </section>
+
+    <!-- USERS (Administrator only) -->
+    <section class="section" id="sec-users">
+      <div class="panel mb-3">
+        <h5>Add a system user</h5>
+        <form class="row g-2 align-items-end" onsubmit="addUser(event)">
+          <div class="col-md-4">
+            <label class="stat-label d-block">Full name</label>
+            <input required id="newUserName" class="form-control" placeholder="e.g. Susan Kamau">
+          </div>
+          <div class="col-md-3">
+            <label class="stat-label d-block">Username</label>
+            <input required id="newUserUsername" class="form-control" placeholder="susan.kamau">
+          </div>
+          <div class="col-md-3">
+            <label class="stat-label d-block">Role</label>
+            <select id="newUserRole" class="form-select">
+              <option>Owner</option>
+              <option selected>Project Manager</option>
+              <option>Finance User</option>
+              <option>Administrator</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-sky w-100">Add user</button>
+          </div>
+        </form>
+      </div>
+      <div class="panel">
+        <h5>System users</h5>
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Access</th><th></th></tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Project detail modal -->
+<div class="modal fade" id="projectModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px; border:none;">
+      <div class="modal-header" style="border-bottom:1px solid var(--line);">
+        <h5 class="modal-title fw-bold" id="modalTitle">Project</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-lite" id="toastLite">Update saved.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ================= DATA ================= */
+const projects = [
+  { id:'A', name:'Riverside Apartments', location:'Nairobi', fund:'Investor A', budget:10000000, received:8000000, spent:5500000, progress:72, status:'healthy', completion:'Oct 2026',
+    categories:{Materials:3000000, Labour:2000000, Equipment:1500000, Transport:800000, Administration:500000, Other:200000, Remaining:2000000} },
+  { id:'B', name:'Westgate Office Fit-Out', location:'Nairobi', fund:'Investor B', budget:6500000, received:6500000, spent:6100000, progress:94, status:'attention', completion:'Sep 2026',
+    categories:{Materials:2500000, Labour:1800000, Equipment:900000, Transport:400000, Administration:350000, Other:150000, Remaining:400000} },
+  { id:'C', name:'Karen Villas Phase II', location:'Nairobi', fund:'Investor A', budget:14000000, received:9000000, spent:3200000, progress:28, status:'healthy', completion:'Mar 2027',
+    categories:{Materials:1400000, Labour:900000, Equipment:600000, Transport:200000, Administration:100000, Other:0, Remaining:9800000} },
+  { id:'D', name:'Nyali Beach Resort Upgrade', location:'Mombasa', fund:'Investor B', budget:5800000, received:5800000, spent:5750000, progress:81, status:'risk', completion:'Aug 2026 (overdue)',
+    categories:{Materials:2600000, Labour:1500000, Equipment:900000, Transport:450000, Administration:250000, Other:50000, Remaining:50000} },
+  { id:'E', name:'Mtwapa Cold Storage Facility', location:'Mombasa', fund:'Investor C', budget:3900000, received:3900000, spent:2350000, progress:100, status:'healthy', completion:'Completed Jul 2026',
+    categories:{Materials:1100000, Labour:700000, Equipment:400000, Transport:100000, Administration:50000, Other:0, Remaining:1550000} },
+];
+
+const employees = [
+  { name:'John Mwangi', role:'Project Manager', project:'Riverside Apartments', pay:85000, status:'paid' },
+  { name:'Grace Wanjiru', role:'Finance Officer', project:'Portfolio-wide', pay:78000, status:'paid' },
+  { name:'Peter Otieno', role:'Site Supervisor', project:'Westgate Office Fit-Out', pay:62000, status:'pending' },
+  { name:'Amina Hassan', role:'Site Supervisor', project:'Nyali Beach Resort Upgrade', pay:62000, status:'pending' },
+  { name:'Daniel Kiptoo', role:'Quantity Surveyor', project:'Karen Villas Phase II', pay:70000, status:'paid' },
+  { name:'Faith Njeri', role:'Administrator', project:'Portfolio-wide', pay:55000, status:'paid' },
+  { name:'Brian Ochieng', role:'Site Foreman', project:'Mtwapa Cold Storage Facility', pay:48000, status:'paid' },
+  { name:'Mercy Adhiambo', role:'Procurement Officer', project:'Riverside Apartments', pay:65000, status:'pending' },
+];
+
+let users = [
+  { id:1, name:'Lynn Musyoka', username:'lynn.musyoka', role:'Owner' },
+  { id:2, name:'John Mwangi',  username:'john.mwangi',  role:'Project Manager', assigned:['A','B'] },
+  { id:3, name:'Grace Wanjiru',username:'grace.wanjiru',role:'Finance User' },
+  { id:4, name:'Faith Njeri',  username:'faith.njeri',  role:'Administrator' },
+];
+let nextUserId = 5;
+
+const ROLE_INFO = {
+  'Owner':            { desc:'Views the overall portfolio and all authorised information.', nav:['dashboard','projects','payroll','fundflow','reports'], edit:{progress:false, expense:false, payroll:false, users:false} },
+  'Project Manager':  { desc:'Manages assigned projects and updates their progress.',        nav:['dashboard','projects','reports'], edit:{progress:true, expense:false, payroll:false, users:false}, scope:'assigned' },
+  'Finance User':     { desc:'Manages financial records, expenditure and payroll.',          nav:['dashboard','projects','payroll','fundflow','reports'], edit:{progress:false, expense:true, payroll:true, users:false} },
+  'Administrator':    { desc:'Manages the system, its users and configuration.',             nav:['dashboard','projects','payroll','fundflow','reports','users'], edit:{progress:true, expense:true, payroll:true, users:true} },
+};
+const NAV_META = {
+  dashboard:{icon:'▤', label:'Dashboard'},
+  projects: {icon:'◧', label:'Projects'},
+  payroll:  {icon:'◎', label:'Payroll'},
+  fundflow: {icon:'↝', label:'Fund Flow'},
+  reports:  {icon:'▥', label:'Reports'},
+  users:    {icon:'◍', label:'User Management'},
+};
+const SECTION_TITLES = {
+  dashboard:['Portfolio dashboard','Everything happening across your projects, funds and people, in one place.'],
+  projects: ['Projects','All projects in the portfolio, grouped by location and fund source.'],
+  payroll:  ['Payroll','Staff assigned across projects and this month\'s payments.'],
+  fundflow: ['Fund flow','Trace every shilling from its source to where it ends up.'],
+  reports:  ['Reports','Generate the reports you need for a decision, not a spreadsheet hunt.'],
+  users:    ['User management','Control who can access the system and what they can do in it.'],
+};
+
+const statusMeta = {
+  healthy:   { label:'Healthy',            chip:'chip-healthy',   dot:'dot-healthy' },
+  attention: { label:'Attention required', chip:'chip-attention', dot:'dot-attention' },
+  risk:      { label:'At risk',            chip:'chip-risk',      dot:'dot-risk' },
+};
+
+const fmt = n => 'KSh ' + Math.round(n).toLocaleString('en-KE');
+const fmtShort = n => 'KSh ' + (n/1000000).toFixed(1) + 'M';
+const initials = name => name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+
+let currentUser = null;
+let activeFilters = { location:'all', fund:'all' };
+let budgetChart, categoryChart, fundChart, modalChart;
+
+/* ================= LOGIN ================= */
+function renderRoleGrid(){
+  document.getElementById('roleGrid').innerHTML = users.map(u=>`
+    <button type="button" class="role-card" onclick="login(${u.id})">
+      <div class="role-avatar">${initials(u.name)}</div>
+      <div class="role-name">${u.name}</div>
+      <div class="role-tag">${u.role}</div>
+      <div class="role-desc">${ROLE_INFO[u.role].desc}</div>
+    </button>
+  `).join('');
+}
+function login(id){
+  currentUser = users.find(u=>u.id===id);
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('shell').classList.add('show');
+  document.getElementById('sideAvatar').textContent = initials(currentUser.name);
+  document.getElementById('sideName').textContent = currentUser.name;
+  document.getElementById('sideRole').textContent = currentUser.role;
+  buildNav();
+  refreshAll();
+  showToast(`Signed in as ${currentUser.name} (${currentUser.role})`);
+}
+function logout(){
+  currentUser = null;
+  document.getElementById('shell').classList.remove('show');
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+/* ================= NAV ================= */
+function buildNav(){
+  const info = ROLE_INFO[currentUser.role];
+  const nav = document.getElementById('navList');
+  nav.innerHTML = info.nav.map((key,i)=>{
+    const m = NAV_META[key];
+    let label = m.label;
+    if(key==='projects' && info.scope==='assigned') label = 'My Projects';
+    if(key==='payroll' && !info.edit.payroll) label = 'Payroll (view)';
+    return `<div class="nav-item ${i===0?'active':''}" data-target="${key}"><span class="ic">${m.icon}</span> ${label}</div>`;
+  }).join('');
+  nav.querySelectorAll('.nav-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      nav.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.getElementById('sec-'+item.dataset.target).classList.add('active');
+      const t = SECTION_TITLES[item.dataset.target];
+      document.getElementById('pageTitle').textContent = t[0];
+      document.getElementById('pageSub').textContent = t[1];
+    });
+  });
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+info.nav[0]).classList.add('active');
+  document.getElementById('pageTitle').textContent = SECTION_TITLES[info.nav[0]][0];
+  document.getElementById('pageSub').textContent = SECTION_TITLES[info.nav[0]][1];
+}
+
+/* ================= THEME ================= */
+function setTheme(mode){
+  document.documentElement.setAttribute('data-theme', mode);
+  document.getElementById('lightBtn').classList.toggle('on', mode==='light');
+  document.getElementById('darkBtn').classList.toggle('on', mode==='dark');
+}
+
+/* ================= TOAST ================= */
+function showToast(msg){
+  const t = document.getElementById('toastLite');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ================= SCOPE ================= */
+function scopedProjects(){
+  const info = ROLE_INFO[currentUser.role];
+  if(info.scope==='assigned'){
+    return projects.filter(p=>(currentUser.assigned||[]).includes(p.id));
+  }
+  return projects;
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  const list = scopedProjects();
+  const info = ROLE_INFO[currentUser.role];
+  const total = list.length;
+  const attention = list.filter(p=>p.status==='attention').length;
+  const risk = list.filter(p=>p.status==='risk').length;
+  const active = list.filter(p=>p.progress<100).length;
+  const avgProgress = total ? Math.round(list.reduce((s,p)=>s+p.progress,0)/total) : 0;
+
+  document.getElementById('dashStatsProjects').innerHTML = `
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">${info.scope==='assigned'?'My projects':'Total projects'}</div><div class="stat-num">${total}</div><div class="stat-note">Across ${new Set(list.map(p=>p.location)).size} location(s)</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Active</div><div class="stat-num" style="color:var(--sea)">${active}</div><div class="stat-note">${total-active} completed</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Needs attention</div><div class="stat-num" style="color:var(--sun)">${attention+risk}</div><div class="stat-note">${attention} attention · ${risk} at risk</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Avg. progress</div><div class="stat-num">${avgProgress}%</div><div class="stat-note">${info.scope==='assigned'?'Your projects':'Portfolio-wide'}</div></div></div>
+  `;
+
+  const received = list.reduce((s,p)=>s+p.received,0);
+  const spent = list.reduce((s,p)=>s+p.spent,0);
+  const payrollTotal = employees.reduce((s,e)=>s+e.pay,0);
+  const payrollPending = employees.filter(e=>e.status==='pending').reduce((s,e)=>s+e.pay,0);
+
+  document.getElementById('dashStatsFinance').innerHTML = `
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Funds received</div><div class="stat-num">${fmtShort(received)}</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Total spent</div><div class="stat-num">${fmtShort(spent)}</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">Available balance</div><div class="stat-num" style="color:#1B7A44">${fmtShort(received-spent)}</div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-label">This month's payroll</div><div class="stat-num">${fmt(payrollTotal)}</div><div class="stat-note">${fmt(payrollPending)} pending</div></div></div>
+  `;
+
+  document.getElementById('healthTitle').textContent = info.scope==='assigned' ? 'My project health' : 'Project health';
+  document.getElementById('healthList').innerHTML = list.map(p=>{
+    const m = statusMeta[p.status];
+    return `<div class="proj-row" onclick="openProject('${p.id}')">
+      <div><div class="proj-name">${p.name}</div><div class="proj-meta">${p.location} · ${p.fund}</div></div>
+      <div class="text-end" style="min-width:120px;">
+        <span class="chip ${m.chip}"><span class="dot ${m.dot}"></span>${m.label}</span>
+        <div class="progress-track mt-2"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+      </div>
+    </div>`;
+  }).join('') || `<div class="stat-note py-3">No projects assigned yet.</div>`;
+
+  renderCharts(list);
+}
+
+/* ================= PROJECTS TABLE ================= */
+function renderProjects(){
+  const body = document.getElementById('projectsBody');
+  const list = scopedProjects().filter(p =>
+    (activeFilters.location==='all' || p.location===activeFilters.location) &&
+    (activeFilters.fund==='all' || p.fund===activeFilters.fund)
+  );
+  body.innerHTML = list.map(p=>{
+    const m = statusMeta[p.status];
+    return `<tr class="clickable" onclick="openProject('${p.id}')">
+      <td><strong>${p.name}</strong></td>
+      <td>${p.location}</td>
+      <td>${p.fund}</td>
+      <td>${fmtShort(p.budget)}</td>
+      <td>${fmtShort(p.spent)}</td>
+      <td style="min-width:130px;">
+        <div class="d-flex align-items-center gap-2">
+          <div class="progress-track flex-grow-1"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+          <span class="stat-note" style="min-width:32px;">${p.progress}%</span>
+        </div>
+      </td>
+      <td><span class="chip ${m.chip}"><span class="dot ${m.dot}"></span>${m.label}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="text-center stat-note py-4">No projects match this filter.</td></tr>`;
+}
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const group = btn.dataset.filter;
+    document.querySelectorAll(`.filter-btn[data-filter="${group}"]`).forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    activeFilters[group] = btn.dataset.value;
+    renderProjects();
+  });
+});
+
+/* ================= PROJECT MODAL ================= */
+function openProject(id){
+  const p = projects.find(x=>x.id===id);
+  const info = ROLE_INFO[currentUser.role];
+  const m = statusMeta[p.status];
+  let editHtml = '';
+
+  if(info.edit.progress){
+    editHtml += `
+      <hr>
+      <h6 class="fw-bold mb-2">Update progress</h6>
+      <div class="d-flex align-items-center gap-3 mb-2">
+        <input type="range" min="0" max="100" value="${p.progress}" id="progressRange" class="form-range" oninput="document.getElementById('progressVal').textContent=this.value+'%'">
+        <span id="progressVal" style="min-width:44px; font-weight:700;">${p.progress}%</span>
+      </div>
+      <select id="statusSelect" class="form-select form-select-sm mb-2" style="max-width:220px;">
+        <option value="healthy" ${p.status==='healthy'?'selected':''}>Healthy</option>
+        <option value="attention" ${p.status==='attention'?'selected':''}>Attention required</option>
+        <option value="risk" ${p.status==='risk'?'selected':''}>At risk</option>
+      </select>
+      <button class="btn btn-sky btn-sm" onclick="saveProgress('${p.id}')">Save update</button>
+    `;
+  }
+  if(info.edit.expense){
+    editHtml += `
+      <hr>
+      <h6 class="fw-bold mb-2">Record an expense</h6>
+      <div class="row g-2 align-items-end">
+        <div class="col-5">
+          <select id="expenseCategory" class="form-select form-select-sm">
+            ${Object.keys(p.categories).filter(c=>c!=='Remaining').map(c=>`<option>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="col-4">
+          <input type="number" id="expenseAmount" class="form-control form-control-sm" placeholder="Amount (KSh)">
+        </div>
+        <div class="col-3">
+          <button class="btn btn-sun btn-sm w-100" onclick="addExpense('${p.id}')">Add</button>
+        </div>
+      </div>
+    `;
+  }
+  if(!info.edit.progress && !info.edit.expense){
+    editHtml = `<div class="perm-note mt-3">You have view-only access to this project.</div>`;
+  }
+
+  document.getElementById('modalTitle').textContent = p.name;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3"><div class="stat-label">Budget</div><div class="stat-num" style="font-size:1.1rem;">${fmt(p.budget)}</div></div>
+      <div class="col-6 col-md-3"><div class="stat-label">Received</div><div class="stat-num" style="font-size:1.1rem;">${fmt(p.received)}</div></div>
+      <div class="col-6 col-md-3"><div class="stat-label">Spent</div><div class="stat-num" style="font-size:1.1rem;">${fmt(p.spent)}</div></div>
+      <div class="col-6 col-md-3"><div class="stat-label">Available</div><div class="stat-num" style="font-size:1.1rem;">${fmt(p.received-p.spent)}</div></div>
+    </div>
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <span class="chip ${m.chip}"><span class="dot ${m.dot}"></span>${m.label}</span>
+      <span class="stat-note">Expected completion: ${p.completion}</span>
+    </div>
+    <div class="progress-track mb-4"><div class="progress-fill" style="width:${p.progress}%"></div></div>
+    <h6 class="fw-bold mb-2">Where the budget is going</h6>
+    <canvas id="modalChartCanvas" height="160"></canvas>
+    ${editHtml}
+  `;
+  new bootstrap.Modal(document.getElementById('projectModal')).show();
+  setTimeout(()=>{
+    const ctx = document.getElementById('modalChartCanvas');
+    if(modalChart) modalChart.destroy();
+    modalChart = new Chart(ctx, {
+      type:'bar',
+      data:{ labels:Object.keys(p.categories), datasets:[{ data:Object.values(p.categories), backgroundColor:'#1DCED8', borderRadius:6 }] },
+      options:{ plugins:{legend:{display:false}}, scales:{ y:{ ticks:{ callback:v=>(v/1e6)+'M' } } } }
+    });
+  }, 150);
+}
+function saveProgress(id){
+  const p = projects.find(x=>x.id===id);
+  p.progress = parseInt(document.getElementById('progressRange').value, 10);
+  p.status = document.getElementById('statusSelect').value;
+  bootstrap.Modal.getInstance(document.getElementById('projectModal')).hide();
+  refreshAll();
+  showToast(`${p.name}: progress updated to ${p.progress}%.`);
+}
+function addExpense(id){
+  const p = projects.find(x=>x.id===id);
+  const cat = document.getElementById('expenseCategory').value;
+  const amt = parseFloat(document.getElementById('expenseAmount').value);
+  if(!amt || amt<=0){ showToast('Enter a valid amount.'); return; }
+  p.categories[cat] = (p.categories[cat]||0) + amt;
+  p.categories.Remaining = Math.max(0, p.categories.Remaining - amt);
+  p.spent += amt;
+  bootstrap.Modal.getInstance(document.getElementById('projectModal')).hide();
+  refreshAll();
+  showToast(`${fmt(amt)} recorded against ${cat} for ${p.name}.`);
+}
+
+/* ================= PAYROLL ================= */
+function renderPayroll(){
+  const info = ROLE_INFO[currentUser.role];
+  document.getElementById('runPayrollBtn').style.display = info.edit.payroll ? 'inline-block' : 'none';
+  document.getElementById('payrollPermNote').style.display = info.edit.payroll ? 'none' : 'block';
+  document.getElementById('payrollBody').innerHTML = employees.map(e=>`
+    <tr>
+      <td><strong>${e.name}</strong></td>
+      <td>${e.role}</td>
+      <td>${e.project}</td>
+      <td>${fmt(e.pay)}</td>
+      <td><span class="badge-status ${e.status==='paid'?'badge-paid':'badge-pending'}">${e.status==='paid'?'Paid':'Pending'}</span></td>
+    </tr>
+  `).join('');
+  const total = employees.reduce((s,e)=>s+e.pay,0);
+  const paid = employees.filter(e=>e.status==='paid').reduce((s,e)=>s+e.pay,0);
+  document.getElementById('pr-total').textContent = fmt(total);
+  document.getElementById('pr-paid').textContent = fmt(paid);
+  document.getElementById('pr-pending').textContent = fmt(total-paid);
+}
+function runPayroll(){
+  let count = 0;
+  employees.forEach(e=>{ if(e.status==='pending'){ e.status='paid'; count++; } });
+  renderPayroll();
+  showToast(count ? `Payroll run: ${count} payment(s) marked as paid.` : 'Everyone is already paid this month.');
+}
+
+/* ================= FUND FLOW ================= */
+function renderFlowPicker(){
+  const list = scopedProjects();
+  document.getElementById('flowPicker').innerHTML = list.map((p,i)=>`<button class="filter-btn ${i===0?'on':''}" onclick="selectFlow('${p.id}', this)">${p.name}</button>`).join('');
+  if(list.length) selectFlow(list[0].id);
+  else document.getElementById('flowDisplay').innerHTML = `<div class="stat-note">No projects to trace yet.</div>`;
+}
+function selectFlow(id, btn){
+  if(btn){ document.querySelectorAll('#flowPicker .filter-btn').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+  const p = projects.find(x=>x.id===id);
+  document.getElementById('flowDisplay').innerHTML = `
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <div class="flow-card"><div class="stat-label">Fund source</div><div class="fw-bold">${p.fund}</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card"><div class="stat-label">Project</div><div class="fw-bold">${p.name}</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card"><div class="stat-label">Allocated</div><div class="fw-bold">${fmt(p.received)}</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card"><div class="stat-label">Spent</div><div class="fw-bold">${fmt(p.spent)}</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card" style="border-color:var(--sky);"><div class="stat-label">Balance remaining</div><div class="fw-bold" style="color:var(--sea)">${fmt(p.received-p.spent)}</div></div>
+    </div>
+  `;
+}
+
+/* ================= REPORTS ================= */
+const reports = [
+  { ic:'▤', name:'Project financial report', desc:'Budget, receipts and expenditure for any project.' },
+  { ic:'⚖', name:'Budget vs. expenditure', desc:'Compare planned spend against actuals, portfolio-wide.' },
+  { ic:'↝', name:'Fund utilization report', desc:'How each investor\'s money has been allocated and used.' },
+  { ic:'◷', name:'Project progress report', desc:'Milestones, timelines and current completion status.' },
+  { ic:'◆', name:'Portfolio performance report', desc:'A single view of what is growing and what is falling behind.' },
+  { ic:'⌂', name:'Location-based performance', desc:'Compare Nairobi and Mombasa activity side by side.' },
+  { ic:'◎', name:'Payroll summary', desc:'Monthly staff costs by project, paid vs. pending.' },
+  { ic:'▥', name:'Project status report', desc:'A quick health check across every active project.' },
+];
+function renderReports(){
+  document.getElementById('reportsGrid').innerHTML = reports.map(r=>`
+    <div class="col-md-6 col-lg-3">
+      <div class="report-card">
+        <div class="report-ic">${r.ic}</div>
+        <div class="fw-bold">${r.name}</div>
+        <div class="stat-note" style="flex-grow:1;">${r.desc}</div>
+        <button class="btn btn-sky btn-sm" onclick="showToast('Generating \\'${r.name}\\'…')">Generate</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ================= USERS ================= */
+function renderUsers(){
+  document.getElementById('usersBody').innerHTML = users.map(u=>`
+    <tr>
+      <td><strong>${u.name}</strong></td>
+      <td>${u.username}</td>
+      <td>${u.role}</td>
+      <td class="stat-note">${ROLE_INFO[u.role].desc}</td>
+      <td>${currentUser.id===u.id ? '<span class="stat-note">You</span>' : `<button class="btn btn-sm btn-outline-secondary" onclick="removeUser(${u.id})">Remove</button>`}</td>
+    </tr>
+  `).join('');
+}
+function addUser(ev){
+  ev.preventDefault();
+  const name = document.getElementById('newUserName').value.trim();
+  const username = document.getElementById('newUserUsername').value.trim();
+  const role = document.getElementById('newUserRole').value;
+  if(!name || !username) return;
+  users.push({ id:nextUserId++, name, username, role, assigned: role==='Project Manager' ? [] : undefined });
+  ev.target.reset();
+  renderUsers();
+  renderRoleGrid();
+  showToast(`${name} added as ${role}.`);
+}
+function removeUser(id){
+  users = users.filter(u=>u.id!==id);
+  renderUsers();
+  renderRoleGrid();
+  showToast('User removed.');
+}
+
+/* ================= CHARTS ================= */
+function renderCharts(list){
+  const budgetCanvas = document.getElementById('chartBudget');
+  if(budgetChart) budgetChart.destroy();
+  budgetChart = new Chart(budgetCanvas, {
+    type:'bar',
+    data:{
+      labels: list.map(p=>p.id),
+      datasets:[
+        { label:'Budget', data:list.map(p=>p.budget), backgroundColor:'#E3FBFC', borderRadius:6 },
+        { label:'Spent', data:list.map(p=>p.spent), backgroundColor:'#1DCED8', borderRadius:6 },
+      ]
+    },
+    options:{ plugins:{legend:{position:'bottom'}}, scales:{ y:{ ticks:{ callback:v=>(v/1e6)+'M' } } } }
+  });
+
+  const catCanvas = document.getElementById('chartCategory');
+  const catProject = list[0] || projects[0];
+  document.getElementById('catChartTitle').textContent = `Where the money is going — ${catProject.name}`;
+  if(categoryChart) categoryChart.destroy();
+  categoryChart = new Chart(catCanvas, {
+    type:'doughnut',
+    data:{ labels:Object.keys(catProject.categories), datasets:[{ data:Object.values(catProject.categories), backgroundColor:['#1DCED8','#FF9D50','#55E07E','#0E7C86','#FFD98A','#E1584F','#BFEFF1'] }] },
+    options:{ plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} }
+  });
+
+  const fundTotals = {};
+  list.forEach(p=>{ fundTotals[p.fund] = (fundTotals[p.fund]||0) + p.received; });
+  const fundCanvas = document.getElementById('chartFund');
+  if(fundChart) fundChart.destroy();
+  fundChart = new Chart(fundCanvas, {
+    type:'pie',
+    data:{ labels:Object.keys(fundTotals), datasets:[{ data:Object.values(fundTotals), backgroundColor:['#1DCED8','#FF9D50','#55E07E'] }] },
+    options:{ plugins:{legend:{position:'bottom'}} }
+  });
+}
+
+/* ================= DOWNLOAD ================= */
+async function downloadSystem(){
+  try{
+    const downloads = await claude.use('downloads');
+    if(!downloads){ showToast('Downloads are not available in this view.'); return; }
+    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    await downloads.save({ filename:'IPPFP-MIS-demo.html', data: html });
+    showToast('Download started — check your downloads.');
+  }catch(e){
+    showToast(e && e.code==='declined' ? 'Download cancelled.' : 'Download unavailable here.');
+  }
+}
+
+/* ================= REFRESH ================= */
+function refreshAll(){
+  renderDashboard();
+  renderProjects();
+  renderPayroll();
+  renderFlowPicker();
+  renderUsers();
+}
+
+/* ================= INIT ================= */
+renderRoleGrid();
+renderReports();
+</script>
+</body>
+</html>
